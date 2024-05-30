@@ -7,7 +7,7 @@ sampling_rate = 2500000;  % sampling rate is 2.5 MHz
 fraction_of_max = 2e-2;
 max_waveform = max(abs(waveform));
 ids_good = find(abs(waveform) > (max_waveform * fraction_of_max));
-waveform = waveform(ids_good(1):ids_good(end));
+waveform = waveform(ids_good(1):(ids_good(end)-1));
 waveform = waveform - waveform(1);
 waveform = waveform / max(waveform);
 
