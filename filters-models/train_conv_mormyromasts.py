@@ -40,7 +40,7 @@ if __name__ == "__main__":
                 train_dataset, valid_dataset = create_train_and_validation_datasets(
                     data, fish_id=fish_id, zone=zone, percent_train=args.percent_train
                 )
-                train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+                train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, drop_last=True)
                 valid_loader = DataLoader(valid_dataset, batch_size=args.batch_size, shuffle=False)
 
                 model = ConvMormyromast(
