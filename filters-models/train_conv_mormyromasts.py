@@ -57,7 +57,9 @@ if __name__ == "__main__":
                 model_PL = ConvMormyromast_PL(model, input_noise_std=input_noise_std, learning_rate=args.learning_rate)
 
                 logger = pl_loggers.TensorBoardLogger(
-                    save_dir="lightning_logs", name=f"{fish_id}-{zone}-{str(input_noise_std).replace('.','p')}"
+                    save_dir="lightning_logs", name=f"{fish_id}-{zone}-{str(input_noise_std).replace('.', 'p')}"
                 )
-                trainer = L.Trainer(max_epochs=args.max_epochs, logger=logger)
+                trainer = L.Trainer(
+                    max_epochs=args.max_epochs, logger=logger, strategy="ddp_find_unused_parameters_true"
+                )
                 trainer.fit(model=model_PL, train_dataloaders=train_loader, val_dataloaders=valid_loader)
