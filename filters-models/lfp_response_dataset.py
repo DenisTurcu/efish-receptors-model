@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 class LfpResponseDataset(Dataset):
     """Dataset class for the LFP responses."""
 
-    def __init__(self, dataframe: pd.DataFrame, fish_id: str, zone: str, mean_response: bool = False):
+    def __init__(self, dataframe: pd.DataFrame, fish_id: str = "", zone: str = "mz", mean_response: bool = False):
         """Initialize the LFP response dataset.
 
         Args:
@@ -31,7 +31,10 @@ class LfpResponseDataset(Dataset):
     def _process_dataframe(self):
         """Process the Dataframe containing the Python processed LFP responses to
         extract the stimuli and corresponding responses."""
-        df = self.dataframe[(self.dataframe["zone"] == self.zone) & (self.dataframe["fish_id"] == self.fish_id)]
+        # below line allows to match all fish when `fish_id == ''` or `fish_id == 'fish'`
+        fish_id_match_df_indices = self.dataframe["fish_id"].apply(lambda x: self.fish_id in x)
+        zone_match_df_indices = self.dataframe["zone"] == self.zone
+        df = self.dataframe[zone_match_df_indices & fish_id_match_df_indices]
 
         if self.mean_response:
             df = df.groupby("stimulus_marker").apply(lambda x: x[["waveform", "mean_lfp_response_modulation"]].iloc[0])
@@ -43,7 +46,11 @@ class LfpResponseDataset(Dataset):
 
 
 def create_train_and_validation_datasets(
-    dataframe: pd.DataFrame, fish_id: str, zone: str, mean_response: bool = False, percent_train: float = 0.8
+    dataframe: pd.DataFrame,
+    fish_id: str = "",
+    zone: str = "mz",
+    mean_response: bool = False,
+    percent_train: float = 0.8,
 ) -> tuple[Dataset, Dataset]:
     """Create training and validation datasets from the processed LFP responses. Split the training and validation
     to ensure that validation data contains stimuli that are not present in the training data, as opposed to simply
@@ -51,7 +58,7 @@ def create_train_and_validation_datasets(
 
     Args:
         dataframe (pd.DataFrame): Dataframe containing the Python processed LFP responses.
-        fish_id (str): The fish ID , e.g. `fish_01`.
+        fish_id (str): The fish ID , e.g. `fish_01`. If empty (i.e. `''`), all fish IDs are considered.
         zone (str): Zone of the recorded data - `mz` or `dlz`
         mean_response (bool, optional): Whether to use mean response instead of single trials. Defaults to False.
         percent_train (float, optional): Percent of stimuli to use for training. Defaults to 0.8.
@@ -59,7 +66,11 @@ def create_train_and_validation_datasets(
     Returns:
         tuple[Dataset, Dataset]: Train and validation datasets.
     """
-    dataframe = dataframe[(dataframe["zone"] == zone) & (dataframe["fish_id"] == fish_id)]
+    # below line allows to match all fish when `fish_id == ''` or `fish_id == 'fish'`
+    fish_id_match_df_indices = dataframe["fish_id"].apply(lambda x: fish_id in x)
+    zone_match_df_indices = dataframe["zone"] == zone
+
+    dataframe = dataframe[zone_match_df_indices & fish_id_match_df_indices]
 
     stimulus_markers = dataframe["stimulus_marker"].unique()
     num_stimuli = len(stimulus_markers)
