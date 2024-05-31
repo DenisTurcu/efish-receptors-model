@@ -1,8 +1,5 @@
 import torch
 import torch.nn as nn
-import sys
-
-sys.path.append("../filters-models")
 
 from helpers_convolutional_filters import compute_num_conv_features, init_conv_layers  # noqa: E402
 
