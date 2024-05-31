@@ -29,7 +29,9 @@ if __name__ == "__main__":
 
     experiments_df = data[["fish_id", "zone"]].groupby(["fish_id", "zone"], as_index=False).apply(lambda x: x.iloc[0])
     zones = experiments_df["zone"].unique()
-    experiments_df = pd.concat([experiments_df, pd.DataFrame(dict(fish_id=["fish"] * len(zones), zone=zones))], axis=0)
+    experiments_df = pd.concat(
+        [experiments_df, pd.DataFrame(dict(fish_id=["fish"] * len(zones), zone=zones))], axis=0, ignore_index=True
+    )
 
     for i in range(args.number_repetitions):
         for input_noise_std in input_noise_stds:
