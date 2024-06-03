@@ -49,8 +49,8 @@ def load_trained_model_summary(path_to_version: str, base_model: ConvMormyromast
 
     event_acc = EventAccumulator(events_file)
     event_acc.Reload()
-    train_error = np.mean([x.value for x in event_acc.Scalars("train_loss")[-10:]])
-    valid_error = np.mean([x.value for x in event_acc.Scalars("val_loss")[-10:]])
+    train_error = np.sqrt(np.mean([x.value for x in event_acc.Scalars("train_loss")[-10:]]))
+    valid_error = np.sqrt(np.mean([x.value for x in event_acc.Scalars("val_loss")[-10:]]))
 
     return pd.DataFrame(
         dict(
