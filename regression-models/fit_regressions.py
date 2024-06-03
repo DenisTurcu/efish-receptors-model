@@ -56,7 +56,7 @@ if __name__ == "__main__":
                 )
 
                 regression = LinearRegression().fit(
-                    train_data[0] + np.random.randn(*train_data[0].shape), train_data[1]
+                    train_data[0] + np.random.randn(*train_data[0].shape) * input_noise_std, train_data[1]
                 )
 
                 train_error = my_rmse(train_data[1], regression.predict(train_data[0]))
