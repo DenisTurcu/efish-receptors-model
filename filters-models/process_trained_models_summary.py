@@ -1,12 +1,10 @@
 import argparse
-from os import path
 import numpy as np
 import pandas as pd
 from glob import glob
+import torch
 from torch.utils.data import DataLoader
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
-from Convolutional_Mormyromast import ConvMormyromast
-from Convolutional_Mormyromast_PL import ConvMormyromast_PL
 from lfp_response_dataset import create_train_and_validation_datasets
 
 
@@ -17,12 +15,12 @@ def my_parser():
     return parser
 
 
-def load_trained_model_summary(path_to_version: str, base_model: ConvMormyromast) -> pd.DataFrame:
+def load_trained_model_summary(path_to_version: str) -> pd.DataFrame:
     """Load summary of the trained model.
 
     Args:
         path_to_version (str): Path to the version directory for one trained model.
-        base_model (ConvMormyromast): The base model to load from checkpoint.
+            E.g. `./trained_filters/fish_01-mz-0p05/version_0`.
 
     Returns:
         pd.Series: Summary of the trained model.
@@ -41,11 +39,9 @@ def load_trained_model_summary(path_to_version: str, base_model: ConvMormyromast
     assert len(events_file) == 1, "There must be a single events file."
     events_file = events_file[0]
 
-    model_PL = ConvMormyromast_PL.load_from_checkpoint(
-        checkpoint, model=base_model, input_noise_std=input_noise_std, learning_rate=1e-3
-    )
-    model_filter = model_PL.model.conv_list[0].weight.detach().cpu().squeeze().numpy()
-    model_bias = model_PL.model.conv_list[0].bias.detach().cpu().numpy()
+    checkpoint = torch.load(checkpoint, map_location=torch.device("cpu"))
+    model_filter = checkpoint["state_dict"]["model.conv_list.0.weight"].numpy().squeeze()
+    model_bias = checkpoint["state_dict"]["model.conv_list.0.bias"].numpy()
 
     event_acc = EventAccumulator(events_file)
     event_acc.Reload()
@@ -77,27 +73,17 @@ if __name__ == "__main__":
     train_dataset, valid_dataset = create_train_and_validation_datasets(data, percent_train=0.8)
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, drop_last=True)
 
-    # define the base model of trained models to load from checkpoint
-    base_model = ConvMormyromast(
-        input_length=next(iter(train_loader))[0].shape[2],
-        input_channels=1,
-        conv_layer_fraction_widths=[1],
-        conv_output_channels=1,
-        conv_stride=25,
-        N_receptors=1,
-    )
-
     path_to_versions = glob(args.path_to_trained_models + "/*/*")
     path_to_versions.sort()
     path_to_print = ""
     trained_models_summary = pd.DataFrame()
     for path_to_version in path_to_versions:
-        temp_path_to_print = '/'.join(path_to_version.split("/")[:-1])
+        temp_path_to_print = "/".join(path_to_version.split("/")[:-1])
         if temp_path_to_print != path_to_print:
             path_to_print = temp_path_to_print
             print(path_to_print)
         trained_models_summary = pd.concat(
-            [trained_models_summary, load_trained_model_summary(path_to_version, base_model)], axis=0, ignore_index=True
+            [trained_models_summary, load_trained_model_summary(path_to_version)], axis=0, ignore_index=True
         )
     print("Done.")
 
