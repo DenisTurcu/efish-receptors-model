@@ -160,6 +160,7 @@ cython_debug/
 #.idea/
 
 *lightning_logs*
+*trained_filters*
 *.DS_Store
 *.csv
 *.mat
