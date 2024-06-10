@@ -42,6 +42,10 @@ def load_trained_model_summary(path_to_version: str) -> pd.DataFrame:
     checkpoint = torch.load(checkpoint, map_location=torch.device("cpu"))
     model_filter = checkpoint["state_dict"]["model.conv_list.0.weight"].numpy().squeeze()
     model_bias = checkpoint["state_dict"]["model.conv_list.0.bias"].numpy()
+    bn_weight = checkpoint["state_dict"]["model.bn.weight"].numpy()
+    bn_bias = checkpoint["state_dict"]["model.bn.bias"].numpy()
+    bn_mean = checkpoint["state_dict"]["model.bn.running_mean"].numpy()
+    bn_var = checkpoint["state_dict"]["model.bn.running_var"].numpy()
 
     event_acc = EventAccumulator(events_file)
     event_acc.Reload()
@@ -58,6 +62,10 @@ def load_trained_model_summary(path_to_version: str) -> pd.DataFrame:
             model_bias=model_bias,
             train_error=train_error,
             valid_error=valid_error,
+            bn_weight=bn_weight,
+            bn_bias=bn_bias,
+            bn_mean=bn_mean,
+            bn_var=bn_var,
         ),
         index=[0],
     )
