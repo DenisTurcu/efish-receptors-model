@@ -1,5 +1,4 @@
 import argparse
-from flask import session
 import pandas as pd
 import lightning as L
 from lightning.pytorch import loggers as pl_loggers
@@ -37,7 +36,7 @@ if __name__ == "__main__":
     )
     zones = experiments_df["zone"].unique()
     experiments_df = pd.concat(
-        [experiments_df, pd.DataFrame(dict(fish_id=["fish"] * len(zones), zone=zones, session_id="000"))],
+        [experiments_df, pd.DataFrame(dict(fish_id=["fish"] * len(zones), zone=zones, session_id=""))],
         axis=0,
         ignore_index=True,
     )
