@@ -36,10 +36,16 @@ if __name__ == "__main__":
 
     data = pd.read_pickle(args.data_fname)
 
-    experiments_df = data[["fish_id", "zone"]].groupby(["fish_id", "zone"], as_index=False).apply(lambda x: x.iloc[0])
+    experiments_df = (
+        data[["fish_id", "zone", "session_id"]]
+        .groupby(["fish_id", "zone", "session_id"], as_index=False)
+        .apply(lambda x: x.iloc[0])
+    )
     zones = experiments_df["zone"].unique()
     experiments_df = pd.concat(
-        [experiments_df, pd.DataFrame(dict(fish_id=["fish"] * len(zones), zone=zones))], axis=0, ignore_index=True
+        [experiments_df, pd.DataFrame(dict(fish_id=["fish"] * len(zones), zone=zones, session_id=""))],
+        axis=0,
+        ignore_index=True,
     )
 
     regression_models = pd.DataFrame()
@@ -50,9 +56,10 @@ if __name__ == "__main__":
             for _, experiment in experiments_df.iterrows():
                 fish_id = experiment["fish_id"]
                 zone = experiment["zone"]
+                session_id = experiment["session_id"]
 
                 train_data, valid_data = create_train_and_validation_datasets_for_regression(
-                    dataframe=data, fish_id=fish_id, zone=zone, percent_train=args.percent_train
+                    dataframe=data, fish_id=fish_id, zone=zone, session_id=session_id, percent_train=args.percent_train
                 )
 
                 regression = LinearRegression().fit(
@@ -69,6 +76,7 @@ if __name__ == "__main__":
                             dict(
                                 fish_id=[fish_id],
                                 zone=[zone],
+                                session_id=[session_id],
                                 input_noise_std=[input_noise_std],
                                 model_id=[i],
                                 train_error=[train_error],

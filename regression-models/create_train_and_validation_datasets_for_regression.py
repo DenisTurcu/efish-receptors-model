@@ -6,6 +6,7 @@ def create_train_and_validation_datasets_for_regression(
     dataframe: pd.DataFrame,
     fish_id: str = "",
     zone: str = "mz",
+    session_id: str = "",
     percent_train: float = 0.8,
 ) -> tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]:
     """Create train and validation datasets for linear regression models.
@@ -23,8 +24,10 @@ def create_train_and_validation_datasets_for_regression(
     # below line allows to match all fish when `fish_id == ''` or `fish_id == 'fish'`
     fish_id_match_df_indices = dataframe["fish_id"].apply(lambda x: fish_id in x)
     zone_match_df_indices = dataframe["zone"] == zone
+    # below line allows to match all sessions when `session_id == ''`
+    session_id_match_df_indices = dataframe["session_id"].apply(lambda x: session_id in x)
 
-    dataframe = dataframe[zone_match_df_indices & fish_id_match_df_indices]
+    dataframe = dataframe[zone_match_df_indices & fish_id_match_df_indices & session_id_match_df_indices]
 
     stimulus_markers = dataframe["stimulus_marker"].unique()
     num_stimuli = len(stimulus_markers)
