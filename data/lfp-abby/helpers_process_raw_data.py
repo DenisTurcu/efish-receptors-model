@@ -75,7 +75,7 @@ def load_lfp_data(fname: str, lfp_id_min: int = 301, lfp_id_max: int = 512) -> p
     experiment_date, session_id, zone, _ = fname.split("/")[-1].split("-")
 
     lfp_means_time = data_means["lfptime"][-1]
-    lfp_sampling_rate = data_means["vdt"][-1]
+    lfp_sampling_period = data_means["vdt"][-1]
 
     # extract the lfp traces
     lfp_trace = data_means["lfpNorm"][:-1]
@@ -122,7 +122,8 @@ def load_lfp_data(fname: str, lfp_id_min: int = 301, lfp_id_max: int = 512) -> p
             mean_lfp_response_modulation=mean_lfp_response_modulation,
             stimulus_amplitude_modulation=data_means["ampmod"][:-1],
             stimulus_waveform_modulation=data_means["wavmod"][:-1],
-            lfp_sampling_rate=[lfp_sampling_rate] * len(data_means["marker"][:-1]),
+            lfp_sampling_period=[lfp_sampling_period] * len(data_means["marker"][:-1]),
+            lfp_sampling_rate=[1 / lfp_sampling_period] * len(data_means["marker"][:-1]),
             lfp_times=[lfp_means_time] * len(data_means["marker"][:-1]),
             experiment_date=[experiment_date] * len(data_means["marker"][:-1]),
             session_id=[session_id] * len(data_means["marker"][:-1]),
