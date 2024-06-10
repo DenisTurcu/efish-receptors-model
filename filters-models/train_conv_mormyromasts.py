@@ -1,4 +1,5 @@
 import argparse
+from flask import session
 import pandas as pd
 import lightning as L
 from lightning.pytorch import loggers as pl_loggers
@@ -11,6 +12,7 @@ from lfp_response_dataset import create_train_and_validation_datasets
 def my_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_fname", type=str, default="../data/lfp-abby/processed/single_trials.pkl")
+    parser.add_argument("--save_folder", type=str, default="lightning_logs")
     parser.add_argument("--percent_train", type=float, default=0.8)
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--learning_rate", type=float, default=1e-3)
@@ -28,10 +30,16 @@ if __name__ == "__main__":
 
     data = pd.read_pickle(args.data_fname)
 
-    experiments_df = data[["fish_id", "zone"]].groupby(["fish_id", "zone"], as_index=False).apply(lambda x: x.iloc[0])
+    experiments_df = (
+        data[["fish_id", "zone", "session_id"]]
+        .groupby(["fish_id", "zone", "session_id"], as_index=False)
+        .apply(lambda x: x.iloc[0])
+    )
     zones = experiments_df["zone"].unique()
     experiments_df = pd.concat(
-        [experiments_df, pd.DataFrame(dict(fish_id=["fish"] * len(zones), zone=zones))], axis=0, ignore_index=True
+        [experiments_df, pd.DataFrame(dict(fish_id=["fish"] * len(zones), zone=zones, session_id="000"))],
+        axis=0,
+        ignore_index=True,
     )
 
     for i in range(args.number_repetitions):
@@ -39,9 +47,10 @@ if __name__ == "__main__":
             for _, experiment in experiments_df.iterrows():
                 fish_id = experiment["fish_id"]
                 zone = experiment["zone"]
+                session_id = experiment["session_id"]
 
                 train_dataset, valid_dataset = create_train_and_validation_datasets(
-                    data, fish_id=fish_id, zone=zone, percent_train=args.percent_train
+                    data, fish_id=fish_id, zone=zone, session_id=session_id, percent_train=args.percent_train
                 )
                 train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, drop_last=True)
                 valid_loader = DataLoader(valid_dataset, batch_size=args.batch_size, shuffle=False)
@@ -58,9 +67,8 @@ if __name__ == "__main__":
                 model_PL = ConvMormyromast_PL(model, input_noise_std=input_noise_std, learning_rate=args.learning_rate)
 
                 logger = pl_loggers.TensorBoardLogger(
-                    save_dir="lightning_logs", name=f"{fish_id}-{zone}-{str(input_noise_std).replace('.', 'p')}"
+                    save_dir=args.save_folder,
+                    name=f"{fish_id}-{zone}-{session_id}-{str(input_noise_std).replace('.', 'p')}",
                 )
-                trainer = L.Trainer(
-                    max_steps=args.max_steps, logger=logger, devices=[args.device]
-                )
+                trainer = L.Trainer(max_steps=args.max_steps, logger=logger, devices=[args.device])
                 trainer.fit(model=model_PL, train_dataloaders=train_loader, val_dataloaders=valid_loader)

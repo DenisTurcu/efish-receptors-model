@@ -1,3 +1,4 @@
+from flask import session
 import numpy as np
 import pandas as pd
 from torch.utils.data import Dataset
@@ -6,7 +7,14 @@ from torch.utils.data import Dataset
 class LfpResponseDataset(Dataset):
     """Dataset class for the LFP responses."""
 
-    def __init__(self, dataframe: pd.DataFrame, fish_id: str = "", zone: str = "mz", mean_response: bool = False):
+    def __init__(
+        self,
+        dataframe: pd.DataFrame,
+        fish_id: str = "",
+        zone: str = "mz",
+        session_id: str = "",
+        mean_response: bool = False,
+    ):
         """Initialize the LFP response dataset.
 
         Args:
@@ -19,6 +27,7 @@ class LfpResponseDataset(Dataset):
         self.dataframe = dataframe
         self.fish_id = fish_id
         self.zone = zone
+        self.session_id = session_id
         self.mean_response = mean_response
         self._process_dataframe()
 
@@ -34,7 +43,9 @@ class LfpResponseDataset(Dataset):
         # below line allows to match all fish when `fish_id == ''` or `fish_id == 'fish'`
         fish_id_match_df_indices = self.dataframe["fish_id"].apply(lambda x: self.fish_id in x)
         zone_match_df_indices = self.dataframe["zone"] == self.zone
-        df = self.dataframe[zone_match_df_indices & fish_id_match_df_indices]
+        # below line allows to match all sessions when `session_id == ''`
+        session_id_match_df_indices = self.dataframe["session_id"].apply(lambda x: self.session_id in x)
+        df = self.dataframe[zone_match_df_indices & fish_id_match_df_indices & session_id_match_df_indices]
 
         if self.mean_response:
             df = df.groupby("stimulus_marker").apply(lambda x: x[["waveform", "mean_lfp_response_modulation"]].iloc[0])
@@ -49,6 +60,7 @@ def create_train_and_validation_datasets(
     dataframe: pd.DataFrame,
     fish_id: str = "",
     zone: str = "mz",
+    session_id: str = "",
     mean_response: bool = False,
     percent_train: float = 0.8,
 ) -> tuple[Dataset, Dataset]:
@@ -69,8 +81,10 @@ def create_train_and_validation_datasets(
     # below line allows to match all fish when `fish_id == ''` or `fish_id == 'fish'`
     fish_id_match_df_indices = dataframe["fish_id"].apply(lambda x: fish_id in x)
     zone_match_df_indices = dataframe["zone"] == zone
+    # below line allows to match all sessions when `session_id == ''`
+    session_id_match_df_indices = dataframe["session_id"].apply(lambda x: session_id in x)
 
-    dataframe = dataframe[zone_match_df_indices & fish_id_match_df_indices]
+    dataframe = dataframe[zone_match_df_indices & fish_id_match_df_indices & session_id_match_df_indices]
 
     stimulus_markers = dataframe["stimulus_marker"].unique()
     num_stimuli = len(stimulus_markers)
@@ -80,10 +94,18 @@ def create_train_and_validation_datasets(
     valid_stimuli = stimulus_markers[stimuli_permutation[num_trained_stimuli:]]
 
     train_dataset = LfpResponseDataset(
-        dataframe[dataframe["stimulus_marker"].apply(lambda x: x in train_stimuli)], fish_id, zone, mean_response
+        dataframe[dataframe["stimulus_marker"].apply(lambda x: x in train_stimuli)],
+        fish_id,
+        zone,
+        session_id,
+        mean_response,
     )
     valid_dataset = LfpResponseDataset(
-        dataframe[dataframe["stimulus_marker"].apply(lambda x: x in valid_stimuli)], fish_id, zone, mean_response
+        dataframe[dataframe["stimulus_marker"].apply(lambda x: x in valid_stimuli)],
+        fish_id,
+        zone,
+        session_id,
+        mean_response,
     )
 
     return train_dataset, valid_dataset
