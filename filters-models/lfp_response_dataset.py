@@ -62,7 +62,7 @@ def create_train_and_validation_datasets(
     session_id: str = "",
     mean_response: bool = False,
     percent_train: float = 0.8,
-) -> tuple[Dataset, Dataset]:
+) -> tuple[Dataset, Dataset] | Dataset:
     """Create training and validation datasets from the processed LFP responses. Split the training and validation
     to ensure that validation data contains stimuli that are not present in the training data, as opposed to simply
     containing single trials from (possibly) the same stimuli from the training data.
@@ -75,7 +75,7 @@ def create_train_and_validation_datasets(
         percent_train (float, optional): Percent of stimuli to use for training. Defaults to 0.8.
 
     Returns:
-        tuple[Dataset, Dataset]: Train and validation datasets.
+        tuple[Dataset, Dataset] | Dataset: Train and validation datasets.
     """
     # below line allows to match all fish when `fish_id == ''` or `fish_id == 'fish'`
     fish_id_match_df_indices = dataframe["fish_id"].apply(lambda x: fish_id in x)
@@ -99,6 +99,9 @@ def create_train_and_validation_datasets(
         session_id,
         mean_response,
     )
+    if percent_train == 1.0:
+        return train_dataset
+
     valid_dataset = LfpResponseDataset(
         dataframe[dataframe["stimulus_marker"].apply(lambda x: x in valid_stimuli)],
         fish_id,
