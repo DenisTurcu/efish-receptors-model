@@ -10,8 +10,8 @@ from lfp_response_dataset import create_train_and_validation_datasets
 
 def my_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--path_to_trained_models", type=str, default="./trained_filters")
-    parser.add_argument("--save_filename", type=str, default="./filters-models.pkl")
+    parser.add_argument("--path_to_trained_models", type=str, default="./trained-by-fish-zone-session")
+    parser.add_argument("--save_filename", type=str, default="./filters-models-by-fish-zone-session.pkl")
     return parser
 
 
@@ -28,7 +28,8 @@ def load_trained_model_summary(path_to_version: str) -> pd.DataFrame:
     experiment_name = path_to_version.split("/")[-2].split("-")
     fish_id = experiment_name[0]
     zone = experiment_name[1]
-    input_noise_std = float(experiment_name[2].replace("p", "."))
+    session_id = experiment_name[2]
+    input_noise_std = float(experiment_name[3].replace("p", "."))
     model_id = int(path_to_version.split("/")[-1].split("_")[-1])
 
     version_files = glob(path_to_version + "/**", recursive=True)
@@ -56,6 +57,7 @@ def load_trained_model_summary(path_to_version: str) -> pd.DataFrame:
         dict(
             fish_id=fish_id,
             zone=zone,
+            session_id=session_id,
             input_noise_std=input_noise_std,
             model_id=model_id,
             model_filter=(model_filter,),
