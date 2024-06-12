@@ -162,6 +162,7 @@ cython_debug/
 *lightning_logs*
 *trained_filters*
 *trained-by-fish-zone*
+*trained-by-fish-zone-session*
 *.DS_Store
 *.csv
 *.mat
